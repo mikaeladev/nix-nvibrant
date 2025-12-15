@@ -77,10 +77,17 @@ Add the following to your nix config:
     enable = true;
 
     # sets the vibrancy level for each output
-    arguments = [
+    vibrancy = [
       "-1024" # greyscale
       "1023" # +200% saturation
       # ...
+    ];
+
+    # likewise sets the dithering level for each output
+    dithering = [
+      "0" # auto
+      "1" # enabled
+      "2" # disabled
     ];
   };
 }
