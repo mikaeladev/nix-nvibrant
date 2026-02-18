@@ -1,12 +1,7 @@
-[nvibrantRepo]: https://github.com/Tremeschin/nvibrant
-[nvibrantUsage]: https://github.com/Tremeschin/nvibrant?tab=readme-ov-file#-usage
-
-<!---->
-
 # nix-nvibrant
 
 A lightweight flake providing a nixpkgs overlay and Home Manager/NixOS modules
-for [nvibrant][nvibrantRepo].
+for [nvibrant][nvibrant-repo].
 
 ## Installation
 
@@ -17,11 +12,8 @@ to nixpkgs, like so:
 # flake.nix
 
 {
-  # [...]
-
   inputs = {
     # [...]
-
     nvibrant = {
       url = "github:mikaeladev/nix-nvibrant";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -29,17 +21,16 @@ to nixpkgs, like so:
   };
 
   outputs =
-    inputs@{ nixpkgs, nvibrant, home-manager, ... }:
+    { nixpkgs, nvibrant, home-manager, ... }@inputs:
     let
-      system = "x86_64-linux";
       pkgs = import nixpkgs {
-        inherit system;
+        system = "x86_64-linux";
         overlays = [ nvibrant.overlays.default ];
       };
     in
     {
       # for NixOS, set the `pkgs` attribute here
-      nixosConfigurations = nixpkgs.lib.nixosSystem {
+      nixosConfigurations.yourpc = nixpkgs.lib.nixosSystem {
         inherit pkgs;
         # if using home-manager with NixOS, also make sure to override `pkgs`
         # in `home-manager.extraSpecialArgs`
@@ -59,12 +50,13 @@ to nixpkgs, like so:
 
 > [!NOTE]
 > This section explains how to use the nvibrant service, not nvibrant itself
-> (see [nvibrant's README][nvibrantUsage] instead).
+> (see [nvibrant's README][nvibrant-usage] instead).
 
 Add the following to your nix config:
 
 ```nix
 # nvibrant.nix
+
 { inputs, ... }: {
   # use the other import for NixOS configs
   imports = [
@@ -76,11 +68,11 @@ Add the following to your nix config:
     # toggles the service on/off
     enable = true;
 
-    # sets the vibrancy level for each output
-    arguments = [
-      "-1024" # greyscale
-      "1023" # +200% saturation
-      # ...
+    # sets the vibrancy level for each monitor
+    vibrancy = [
+      "0%"    # greyscale
+      "100%"  # normal
+      "200%"  # doubled
     ];
   };
 }
@@ -90,3 +82,6 @@ Add the following to your nix config:
 
 This project is licensed under the terms of the GNU General Public License 3.0.
 You can read the full license text in [LICENSE](./LICENSE).
+
+[nvibrant-repo]: https://github.com/Tremeschin/nvibrant
+[nvibrant-usage]: https://github.com/Tremeschin/nvibrant?tab=readme-ov-file#-usage

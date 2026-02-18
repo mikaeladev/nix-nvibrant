@@ -1,39 +1,48 @@
 {
-  description = "nvibrant flake";
+  description = "Configure NVIDIA's Digital Vibrance on Wayland";
 
-  inputs.nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+  inputs = {
+    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+
+    treefmt = {
+      url = "github:numtide/treefmt-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+  };
 
   outputs =
-    { nixpkgs, ... }:
+    { nixpkgs, treefmt, ... }:
+
     let
-      createPackage = import ./default.nix;
-      createModule = import ./module.nix;
+      system = "x86_64-linux";
+      pkgs = nixpkgs.legacyPackages.${system};
 
-      supportedSystems = [ "x86_64-linux" ];
+      treefmtEval = treefmt.lib.evalModule pkgs ./treefmt.nix;
+    in
 
-      forAllSystems = f: nixpkgs.lib.genAttrs supportedSystems (
-        system: f nixpkgs.legacyPackages.${system}
-      );
-    in {
-      nixosModules = rec {
-        nix-nvibrant = createModule { };
-        default = nix-nvibrant;
-      };
+    {
+      formatter.${system} = treefmtEval.config.build.wrapper;
 
       homeModules = rec {
-        nix-nvibrant = createModule { isHomeModule = true; };
-        default = nix-nvibrant;
+        default = nvibrant;
+        nix-nvibrant = nvibrant;
+        nvibrant = import ./module.nix;
       };
 
-      packages = forAllSystems (pkgs: rec {
-        nvibrant = createPackage { inherit pkgs; };
+      nixosModules = rec {
         default = nvibrant;
-      });
+        nix-nvibrant = nvibrant;
+        nvibrant = import ./module.nix;
+      };
 
-      overlays.default = (final: _: {
-        nvibrant = createPackage { pkgs = final; };
-      });
+      packages.${system} = rec {
+        default = nvibrant;
+        nvibrant = import ./default.nix { inherit pkgs; };
+      };
 
-      formatter = forAllSystems (pkgs: pkgs.alejandra);
+      overlays = rec {
+        default = nvibrant;
+        nvibrant = final: _: { nvibrant = import ./default.nix { pkgs = final; }; };
+      };
     };
 }

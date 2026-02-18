@@ -1,42 +1,69 @@
-{ isHomeModule ? false }:
-{ config, lib, pkgs, ... }:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 
 let
   inherit (lib)
+    all
+    assertMsg
+    escapeShellArgs
+    getExe
+    map
+    match
+    mkEnableOption
     mkIf
     mkOption
-    mkEnableOption
+    mkOptionType
     mkPackageOption
-    concatStringsSep
+    removeSuffix
+    toInt
+    toList
     types
-  ;
+    warn
+    ;
+
+  clampMax = x: y: if x > y then y else x;
+
+  warnDeprecated =
+    old: new: warn "The '${old}' option is deprecated, use '${new}' instead.";
+
+  percentStr = mkOptionType {
+    inherit (types.str) merge;
+    name = "percentStr";
+    description = "percentage string";
+    descriptionClass = "noun";
+    check = x: types.str.check x && match "[0-9]([0-9]+)?%" x != null;
+  };
 
   cfg = config.services.nvibrant;
-
-  binPath = "${cfg.package}/bin/nvibrant";
-  binArgs = concatStringsSep " " cfg.arguments;
-
-  service = {
-    Unit = {
-      Description = "Apply nvibrant";
-      After = [ "graphical.target" ];
-    };
-    Service = {
-      Type = "oneshot";
-      ExecStart = "${binPath} ${binArgs}";
-    };
-    Install.WantedBy = [ "default.target" ];
-  };
 in
+
 {
   options.services.nvibrant = {
-    enable = mkEnableOption "Enable nvibrant service";
+    enable = mkEnableOption "nvibrant";
 
     package = mkPackageOption pkgs "nvibrant" { };
 
+    vibrancy = mkOption {
+      type = with types; either percentStr (listOf percentStr);
+      apply = (x: map (x: toInt (removeSuffix "%" x)) (toList x));
+      default = [ ];
+      example = [ "125%" ];
+      description = ''
+        The vibrancy level for your monitor(s).
+
+        Applies in the order of physical ports on your GPU. Only accepts values
+        ranging from 0% to 200% with 100% as the baseline.
+      '';
+    };
+
     arguments = mkOption {
-      type = types.listOf types.str;
-      default = [ "0" ];
+      type = with types; nullOr (listOf str);
+      default = null;
+      visible = false;
       example = [ "512" ];
       description = ''
         List of vibrancy levels to pass to nvibrant, ranging from `-1024`
@@ -46,13 +73,45 @@ in
     };
   };
 
-  config = mkIf cfg.enable (
-    if isHomeModule then {
-      home.packages = [ cfg.package ];
-      systemd.user.services.nvibrant = service;
-    } else {
-      environment.systemPackages = [ cfg.package ];
-      systemd.services.nvibrant = service;
-    }
-  );
+  config =
+    let
+      pkgExe = getExe cfg.package;
+
+      vibrancyLevels =
+        assert assertMsg (all (x: x >= 0 && x <= 200) cfg.vibrancy)
+          "The 'services.nvibrant.vibrancy' option only accepts values ranging from 0% to 200%";
+        if cfg.arguments != null then
+          warnDeprecated "services.nvibrant.arguments" "services.nvibrant.vibrancy"
+            cfg.arguments
+        else
+          map (x: clampMax (-1024 + 2048 / 200 * x) 1023) cfg.vibrancy;
+
+      serviceExec = pkgs.writeShellScript "apply-nvibrant" ''
+        ${pkgExe} ${escapeShellArgs vibrancyLevels}
+      '';
+    in
+    mkIf cfg.enable {
+      systemd.user.services = {
+        apply-nvibrant = {
+          Unit = {
+            Description = "Applies nvibrant";
+            After = [ "graphical.target" ];
+          };
+          Service = {
+            Type = "oneshot";
+            ExecStart = serviceExec;
+          };
+          Install = {
+            WantedBy = [ "default.target" ];
+          };
+        };
+      };
+
+      assertions = [
+        {
+          assertion = pkgs.stdenv.hostPlatform.system == "x86_64-linux";
+          message = "The 'services.nvibrant' module only supports x86_64-linux";
+        }
+      ];
+    };
 }

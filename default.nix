@@ -1,7 +1,9 @@
-{ pkgs ? import <nixpkgs> {} }:
+{
+  pkgs ? import <nixpkgs> { },
+}:
 
 pkgs.callPackage (
-  { pkgs, stdenv }:
+  { pkgs, stdenv, ... }:
 
   stdenv.mkDerivation rec {
     pname = "nvibrant";
@@ -12,10 +14,10 @@ pkgs.callPackage (
       python313Packages.meson
       python313Packages.ninja
     ];
-    
+
     src = fetchGit {
       url = "https://github.com/Tremeschin/nvibrant.git";
-      rev = "6ca9fa32b16551a39ce51a1900f62a870d7a2200";
+      rev = "ba3f723a6cb5930db38186f9fbb9d71e9047eb13";
       submodules = true;
     };
 
@@ -28,5 +30,14 @@ pkgs.callPackage (
       mkdir -p $out/bin
       cp ./build/${pname} $out/bin
     '';
+
+    meta = with pkgs.lib; {
+      description = "Configure NVIDIA's Digital Vibrance on Wayland";
+      homepage = "https://github.com/Tremeschin/nvibrant";
+      license = licenses.gpl3;
+      mainProgram = "nvibrant";
+      maintainers = [ ]; # update this once added to nixpkgs
+      platforms = intersectLists platforms.x86_64 platforms.linux;
+    };
   }
-) {}
+) { }
