@@ -84,7 +84,7 @@ in
           warnDeprecated "services.nvibrant.arguments" "services.nvibrant.vibrancy"
             cfg.arguments
         else
-          map (x: clampMax (-1024 + 2048 / 200 * x) 1023) cfg.vibrancy;
+          map (x: clampMax (10.24 * x - 1024) 1023) cfg.vibrancy;
 
       serviceExec = pkgs.writeShellScript "apply-nvibrant" ''
         ${pkgExe} ${escapeShellArgs vibrancyLevels}
