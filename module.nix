@@ -10,6 +10,7 @@ let
     all
     assertMsg
     escapeShellArgs
+    floor
     getExe
     map
     match
@@ -84,7 +85,7 @@ in
           warnDeprecated "services.nvibrant.arguments" "services.nvibrant.vibrancy"
             cfg.arguments
         else
-          map (x: clampMax (10.24 * x - 1024) 1023) cfg.vibrancy;
+          map (x: clampMax (floor (10.24 * x - 1024)) 1023) cfg.vibrancy;
 
       serviceExec = pkgs.writeShellScript "apply-nvibrant" ''
         ${pkgExe} ${escapeShellArgs vibrancyLevels}
