@@ -72,6 +72,12 @@ in
         ports in your GPU.
       '';
     };
+
+    service = mkOption {
+      type = (pkgs.formats.systemd { }).type;
+      default = { };
+      internal = true;
+    };
   };
 
   config =
@@ -87,32 +93,23 @@ in
         else
           map (x: clampMax (floor (10.24 * x - 1024)) 1023) cfg.vibrancy;
 
-      serviceExec = pkgs.writeShellScript "apply-nvibrant" ''
+      serviceScript = pkgs.writeShellScript "apply-nvibrant" ''
         ${pkgExe} ${escapeShellArgs vibrancyLevels}
       '';
     in
     mkIf cfg.enable {
-      systemd.user.services = {
-        apply-nvibrant = {
-          Unit = {
-            Description = "Applies nvibrant";
-            After = [ "graphical.target" ];
-          };
-          Service = {
-            Type = "oneshot";
-            ExecStart = serviceExec;
-          };
-          Install = {
-            WantedBy = [ "default.target" ];
-          };
+      services.nvibrant.service = {
+        Unit = {
+          Description = "Applies nvibrant";
+          After = [ "graphical.target" ];
+        };
+        Service = {
+          Type = "oneshot";
+          ExecStart = "${serviceScript}";
+        };
+        Install = {
+          WantedBy = [ "default.target" ];
         };
       };
-
-      assertions = [
-        {
-          assertion = pkgs.stdenv.hostPlatform.system == "x86_64-linux";
-          message = "The 'services.nvibrant' module only supports x86_64-linux";
-        }
-      ];
     };
 }

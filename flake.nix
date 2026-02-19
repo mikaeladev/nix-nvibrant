@@ -26,13 +26,13 @@
       homeModules = rec {
         default = nvibrant;
         nix-nvibrant = nvibrant;
-        nvibrant = import ./module.nix;
+        nvibrant = import ./modules/home.nix;
       };
 
       nixosModules = rec {
         default = nvibrant;
         nix-nvibrant = nvibrant;
-        nvibrant = import ./module.nix;
+        nvibrant = import ./modules/nixos.nix;
       };
 
       packages.${system} = rec {
