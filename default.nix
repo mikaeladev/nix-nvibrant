@@ -3,7 +3,11 @@
 }:
 
 pkgs.callPackage (
-  { pkgs, stdenv, ... }:
+  {
+    fetchFromGitHub,
+    pkgs,
+    stdenv,
+  }:
 
   stdenv.mkDerivation rec {
     pname = "nvibrant";
@@ -15,10 +19,12 @@ pkgs.callPackage (
       python313Packages.ninja
     ];
 
-    src = fetchGit {
-      url = "https://github.com/Tremeschin/nvibrant.git";
+    src = fetchFromGitHub {
+      owner = "Tremeschin";
+      repo = "nvibrant";
       rev = "ba3f723a6cb5930db38186f9fbb9d71e9047eb13";
-      submodules = true;
+      hash = "sha256-Ws8Pxwtg5KaG5kktvoTM9VgQnTG5MGbFNgB3d10R7EM=";
+      fetchSubmodules = true;
     };
 
     buildPhase = ''
