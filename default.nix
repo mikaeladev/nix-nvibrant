@@ -5,40 +5,47 @@
 pkgs.callPackage (
   {
     lib,
-    stdenv,
     fetchFromGitHub,
-    meson,
-    ninja,
-    pkg-config,
+    python3Packages,
+    git,
   }:
 
-  stdenv.mkDerivation (finalAttrs: {
+  python3Packages.buildPythonApplication (finalAttrs: {
     pname = "nvibrant";
-    version = "1.1.0";
+    version = "1.2.0";
+    pyproject = true;
 
     src = fetchFromGitHub {
       owner = "Tremeschin";
       repo = "nvibrant";
       rev = "v${finalAttrs.version}";
-      hash = "sha256-RZIi1V3hcwZdaI84Nd0YSQOjDng9/ZDg7aqfTL7GJIU=";
+      hash = "sha256-YUeHFRv1w/BXKdfkbmA/1pi0enCfL6UqV+x+uBroPFY=";
       fetchSubmodules = true;
+      leaveDotGit = true;
     };
 
-    nativeBuildInputs = [
+    patches = [ ./hatch_build.patch ];
+
+    build-system = with python3Packages; [
+      hatchling
       meson
       ninja
-      pkg-config
     ];
 
-    mesonBuildType = "release";
+    dependencies = with python3Packages; [ packaging ];
+
+    nativeBuildInputs = [ git ];
 
     meta = with lib; {
       description = "Configure NVIDIA's Digital Vibrance on Wayland";
       homepage = "https://github.com/Tremeschin/nvibrant";
       license = licenses.gpl3Only;
-      maintainers = [ ]; # update this once added to nixpkgs
-      platforms = [ "x86_64-linux" ];
       mainProgram = "nvibrant";
+      maintainers = [ maintainers.mikaeladev ];
+      platforms = [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
     };
   })
 ) { }
