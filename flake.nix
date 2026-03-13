@@ -14,14 +14,17 @@
     { nixpkgs, treefmt, ... }:
 
     let
-      system = "x86_64-linux";
-      pkgs = nixpkgs.legacyPackages.${system};
+      eachSystem = nixpkgs.lib.genAttrs [
+        "x86_64-linux"
+        "aarch64-linux"
+      ];
 
-      treefmtEval = treefmt.lib.evalModule pkgs ./treefmt.nix;
+      mkTreefmtEval =
+        system: treefmt.lib.evalModule nixpkgs.legacyPackages.${system} ./treefmt.nix;
     in
 
     {
-      formatter.${system} = treefmtEval.config.build.wrapper;
+      formatter = eachSystem (system: (mkTreefmtEval system).config.build.wrapper);
 
       homeModules = rec {
         default = nvibrant;
@@ -35,14 +38,18 @@
         nvibrant = import ./modules/nixos.nix;
       };
 
-      packages.${system} = rec {
+      packages = eachSystem (system: rec {
         default = nvibrant;
-        nvibrant = import ./default.nix { inherit pkgs; };
-      };
+        nvibrant = import ./package/default.nix {
+          pkgs = nixpkgs.legacyPackages.${system};
+        };
+      });
 
       overlays = rec {
         default = nvibrant;
-        nvibrant = final: _: { nvibrant = import ./default.nix { pkgs = final; }; };
+        nvibrant = final: _: {
+          nvibrant = import ./package/default.nix { pkgs = final; };
+        };
       };
     };
 }
