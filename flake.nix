@@ -2,7 +2,7 @@
   description = "Configure NVIDIA's Digital Vibrance on Wayland";
 
   inputs = {
-    nixpkgs.url = "github:nixos/nixpkgs/nixos-unstable";
+    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
 
     treefmt = {
       url = "github:numtide/treefmt-nix";
@@ -36,20 +36,6 @@
         default = nvibrant;
         nix-nvibrant = nvibrant;
         nvibrant = import ./modules/nixos.nix;
-      };
-
-      packages = eachSystem (system: rec {
-        default = nvibrant;
-        nvibrant = import ./package/default.nix {
-          pkgs = nixpkgs.legacyPackages.${system};
-        };
-      });
-
-      overlays = rec {
-        default = nvibrant;
-        nvibrant = final: _: {
-          nvibrant = import ./package/default.nix { pkgs = final; };
-        };
       };
     };
 }

@@ -12,7 +12,6 @@ let
     escapeShellArgs
     floor
     getExe
-    map
     match
     mkEnableOption
     mkIf

@@ -1,17 +1,7 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{ config, lib, ... }:
 
 let
-  inherit (lib)
-    hm
-    intersectLists
-    mkIf
-    platforms
-    ;
+  inherit (lib) mkIf;
 
   cfg = config.services.nvibrant;
 in
@@ -23,11 +13,5 @@ in
     systemd.user.services = {
       apply-nvibrant = cfg.service;
     };
-
-    assertions = [
-      (hm.assertions.assertPlatform "services.nvibrant" pkgs (
-        intersectLists platforms.x86_64 platforms.linux
-      ))
-    ];
   };
 }

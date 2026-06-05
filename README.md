@@ -1,12 +1,11 @@
 # nix-nvibrant
 
-A lightweight flake providing a nixpkgs overlay and Home Manager/NixOS modules
-for [nvibrant][nvibrant-repo].
+A lightweight flake providing Home Manager & NixOS modules for
+[nvibrant][nvibrant-repo].
 
 ## Installation
 
-Add this repo to your flake's inputs and include the overlay to add `nvibrant`
-to nixpkgs, like so:
+Add this repo to your flake's inputs like so:
 
 ```nix
 # flake.nix
@@ -21,26 +20,22 @@ to nixpkgs, like so:
   };
 
   outputs =
-    { nixpkgs, nvibrant, home-manager, ... }@inputs:
-    let
-      pkgs = import nixpkgs {
-        system = "x86_64-linux";
-        overlays = [ nvibrant.overlays.default ];
-      };
-    in
-    {
-      # for NixOS, set the `pkgs` attribute here
-      nixosConfigurations.yourpc = nixpkgs.lib.nixosSystem {
-        inherit pkgs;
-        # if using home-manager with NixOS, also make sure to override `pkgs`
-        # in `home-manager.extraSpecialArgs`
+    { nixpkgs, nvibrant, home-manager, ... }@inputs: {
+      nixosConfigurations.PC_NAME = nixpkgs.lib.nixosSystem {
         # [...]
+        modules = [
+          nvibrant.nixosModules.default
+          # [...]
+        ];
+
       };
 
-      # for standalone home-manager, set the `pkgs` attribute here
-      homeConfigurations.yourname = home-manager.lib.homeManagerConfiguration {
-        inherit pkgs;
+      homeConfigurations.USER_NAME = home-manager.lib.homeManagerConfiguration {
         # [...]
+        modules = [
+          nvibrant.homeModules.default
+          # [...]
+        ];
       };
     }
 }
@@ -58,12 +53,6 @@ Add the following to your nix config:
 # nvibrant.nix
 
 { inputs, ... }: {
-  # use the other import for NixOS configs
-  imports = [
-    inputs.nvibrant.homeModules.default
-    # inputs.nvibrant.nixosModules.default
-  ];
-
   services.nvibrant = {
     # toggles the service on/off
     enable = true;
