@@ -13,6 +13,8 @@ Add this repo to your flake's inputs like so:
 {
   inputs = {
     # [...]
+    nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
+
     nvibrant = {
       url = "github:mikaeladev/nix-nvibrant";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -20,14 +22,13 @@ Add this repo to your flake's inputs like so:
   };
 
   outputs =
-    { nixpkgs, nvibrant, home-manager, ... }@inputs: {
+    { nixpkgs, nvibrant, home-manager, ... }: {
       nixosConfigurations.PC_NAME = nixpkgs.lib.nixosSystem {
         # [...]
         modules = [
           nvibrant.nixosModules.default
           # [...]
         ];
-
       };
 
       homeConfigurations.USER_NAME = home-manager.lib.homeManagerConfiguration {
@@ -52,7 +53,7 @@ Add the following to your nix config:
 ```nix
 # nvibrant.nix
 
-{ inputs, ... }: {
+{
   services.nvibrant = {
     # toggles the service on/off
     enable = true;
